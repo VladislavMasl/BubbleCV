@@ -9,7 +9,8 @@ using namespace std;
 using namespace cv;
 
 
-void getArrayOfDistances(vector<vector<Point>> contours, Point center, double radius, vector<double>* distances_arr, vector<int>* N) {
+void getArrayOfDistances(vector<vector<Point>> contours, Point center, double radius, vector<double>* distances_arr, vector<int>* N) { /*change 2 input arrays: distance
+	and point number array given by link in memory*/
 
 	for (int i = 0; i < contours.size(); ++i) {
 		for (int j = 0; j < contours[i].size(); ++j) {
@@ -21,9 +22,8 @@ void getArrayOfDistances(vector<vector<Point>> contours, Point center, double ra
 }
 
 
-double getMaxDistance(vector<vector<Point>> contours, Point center, double radius) { /*на каждом кадре находит дистанцию между каждой точкой контура
-	и центром пузыря, отнимает длину радиуса, возвращает максимальную разность - получается максимальная дистанция от контура до вписанной в контур
-	окружности*/
+double getMaxDistance(vector<vector<Point>> contours, Point center, double radius) { /*searching max distance between point on contour
+	and poind on circle*/
 	double distance_tmp = 0;
 	double distance = 0;
 	double current_max = 0;
@@ -42,8 +42,8 @@ double getMaxDistance(vector<vector<Point>> contours, Point center, double radiu
 }
 
 
-double getMinDistance(vector<vector<Point>> contours, Point center, double radius) { /*находит расстояние между каждой точкой контура
-	и каждой точкой вписанной в контур окружности, возвращает минимальное значение*/
+double getMinDistance(vector<vector<Point>> contours, Point center, double radius) { /*search the min dist between each point on contour and center
+	point this function is checking that the minimum radius is correctly found*/
 	int i = 0;
 	int j = 0;
 	size_t k = 0;
@@ -66,27 +66,15 @@ double getMinDistance(vector<vector<Point>> contours, Point center, double radiu
 				distance = current_min;
 				current_min = distance_tmp;
 			}
-
-
 		}
-		//size_t s = distance_arr.size();
-		//for (k; k < s; ++k) {
-		//	d_sum = d_sum + distance_arr[i];
-		//	//cout << "d_sum" << d_sum << endl;
-		//	//cout << "k" << k << endl;
-		//}
-		//d_mid = d_sum / k;
-		//cout << "d_mid" << d_mid << endl;
-		//return d_mid;
 		return current_min;
 	}
 }
 
 
-Point getCenter(vector<vector<Point>> contours) { /*находит центр контура через моменты*/
+Point getCenter(vector<vector<Point>> contours) { /*find center of contour trouhg the moments and terurn it as point {x,y}*/
 	vector<Moments> mu(contours.size());
 	Point center;
-
 	for (int i = 0; i < contours.size(); ++i) {
 		for (int j = 0; j < contours[i].size(); ++j) {
 			mu[j] = moments(contours[i]);
@@ -96,16 +84,14 @@ Point getCenter(vector<vector<Point>> contours) { /*находит центр контура через 
 		}
 
 	}
-	//return center;
 }
 
 
-double getMinRadius(vector<vector<Point>> contours, Point center) {/*находит радиус между каждой точкой контура и каждой точкой вписанной окружности
-	возвращает минимально значение, по которому строится радиус вписанной окружности*/
+double getMinRadius(vector<vector<Point>> contours, Point center) {/*finding minimun distance between center and each
+	point on the contour*/
 	double min_rad = 999999999;
 	double radius = 0;
 	for (int i = 0; i < contours.size(); ++i) {
-		//minEnclosingCircle(contours[i], center, r);
 		for (size_t j = 0; j < contours[i].size(); ++j) {
 			Point rad = (contours[i][j]);
 			radius = sqrt(pow((center.x - rad.x), 2) + pow((center.y - rad.y), 2));
@@ -113,7 +99,6 @@ double getMinRadius(vector<vector<Point>> contours, Point center) {/*находит рад
 				double tmp = min_rad;
 				min_rad = radius;
 				radius = tmp;
-				//cout << "R" << min_rad << endl;
 			}
 		}
 	}
@@ -121,66 +106,49 @@ double getMinRadius(vector<vector<Point>> contours, Point center) {/*находит рад
 }
 
 
-//определение контуров
+//contours definition
 
 void getContours(Mat* imgdil, Mat* img) {
 
-	vector<vector<Point>> contours;  //vector<vector<Point>> - матрица в каждой ячейке которой хранится точка контура {x,y}
-	vector<Vec4i> hierarchy;  //4х мерный масив для уровней инрархии контуров (всего 4 уровня иерархии)
+	vector<vector<Point>> contours;  //vector<vector<Point>> - a matrix in each cell of which a contour point is stored {x,y}
+	vector<Vec4i> hierarchy;  //4-dimensional array for contour hierarchy levels (4 hierarchy levels in total)
 
-	int area_pass = 5000; //параметр прохождения контура по площади в дальнейший алгоритм
+	int area_pass = 5000; //parameter for passing the contour over the area in the further algorithm
 
 
-	findContours(*imgdil, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+	findContours(*imgdil, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE); //define the contours on the dilate image
 
-	for (int i = 0; i < (contours.size()); ++i) {
+	for (int i = 0; i < (contours.size()); ++i) { 
 		int area = contourArea(contours[i]);
-		//cout << contours[i] << endl;
-
-
-
-
-		string area_size, radius_size, radius_result, area_result, distance_size, distance_result, distance_M_size, distance_M_result;
+		string area_size, radius_size, radius_result, area_result, distance_size, distance_result, distance_M_size, distance_M_result; /*strings 
+		for concatenation*/
 		string sA{ "Area = " }, sR{ "Radius = " }, sD{ "Min distance = " }, sDm{ "Max distance = " };
-
 		if (area >= area_pass) {
 			area_size = to_string(area);
 			area_result.append(sA).append(area_size);
 			drawContours(*img, contours, i, Scalar(0, 255, 0), 1);
-
+			
 			vector<Rect> boundRect(contours.size());
 			boundRect[i] = boundingRect(contours[i]);
-
-
-
 			Point center_tm;
-
-			//vector<Moments> mu;
-
 			center_tm = getCenter(contours);
-			//cout << center_tm << endl;
+			
 			double radius = getMinRadius(contours, center_tm);
-			circle(*img, center_tm, radius, Scalar(0, 0, 255), 1);
+			
+			circle(*img, center_tm, radius, Scalar(0, 0, 255), 1); //drawing circle according to calculated radius and center on each frame
+			
 			double min_dist = getMinDistance(contours, center_tm, radius);
 			double max_dist = getMaxDistance(contours, center_tm, radius);
+			
 			vector<double> distances_arr(contours[i].size() * 3);
 			vector<int> N(contours[i].size() * 3);
+			
 			getArrayOfDistances(contours, center_tm, radius, &distances_arr, &N);
+			
 			for (int k = 0; k < contours[i].size(); ++k) {
 				cout << " N " << N[k] << endl;
 				cout << " D " << distances_arr[k] << endl;
 			}
-
-
-
-
-			//cout << boundRect[i] << endl;
-
-			/*float rad_tmp;*/
-			//Point2f center;
-			//
-			//minEnclosingCircle(contours[i], center, rad_tmp);
-
 			radius_size = to_string(radius);
 			radius_result.append(sR).append(radius_size);
 			distance_size = to_string(min_dist);
@@ -196,38 +164,37 @@ void getContours(Mat* imgdil, Mat* img) {
 	}
 }
 
-int main(int argv, char *argc[]) {
+int main(int argv, char *argc[]) { //give arguments from console in our function: link on video and waitkey
 
 	setlocale(LC_ALL, "Russian");
+	
 	string path = argc[1];
 	int waitkey = atoi(argc[2]);
 	  
-	//string path = "C:\\Users\\Владислав\\Desktop\\videos\\cut.mp4";
-	//импотрируем видео из файла C:\\Users\\Владислав\\Desktop\\videos\\cut.mp4"
 	VideoCapture cap(path);
-	Mat img, imgblur, imggray, imgcanny, imgdil, imgtr, imgcr;  //массивы для хранения изображений
-	Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3)); /*создаемм фильтр-матрицу из единиц, для уменьшения шума.
-	падение шума= 1/(n*n) где n - измерение матрицы чем больше измерений тем сильнее dilate - фильтрация*/
+	Mat img, imgblur, imggray, imgcanny, imgdil, imgtr, imgcr;  //define arrays for images
+	Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3)); /*СЃРѕР·РґР°РµРјРј С„РёР»СЊС‚СЂ-РјР°С‚СЂРёС†Сѓ РёР· РµРґРёРЅРёС†, РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ С€СѓРјР°.
+	РїР°РґРµРЅРёРµ С€СѓРјР°= 1/(n*n) РіРґРµ n - РёР·РјРµСЂРµРЅРёРµ РјР°С‚СЂРёС†С‹ С‡РµРј Р±РѕР»СЊС€Рµ РёР·РјРµСЂРµРЅРёР№ С‚РµРј СЃРёР»СЊРЅРµРµ dilate - С„РёР»СЊС‚СЂР°С†РёСЏ*/
 
 	while (true) {
 
-		cap.read(img); //читаем видео покадрово
+		cap.read(img); //read video frame-by-frame
 		if (cap.read(img) == false) {
 			break;
 		}
 		Rect roi(250, 100, 350, 300);
-		imgcr = img(roi); //обрезаем каждый кадр до прямугольника со сторонами 
+		imgcr = img(roi); //croping each frame to ractangle with sides 250x100x350x300
 
-		cvtColor(imgcr, imggray, COLOR_BGR2GRAY);  //препроцессинг изображения
+		cvtColor(imgcr, imggray, COLOR_BGR2GRAY);  //image preprocessing
 		threshold(imggray, imgtr, 85, 255, THRESH_BINARY_INV);
 		GaussianBlur(imgtr, imgblur, Size(3, 3), 1, 1);
 		Canny(imgblur, imgcanny, 45, 55);
 		dilate(imgblur, imgdil, kernel);
 
-		getContours(&imgdil, &imgcr); //вызываем нашу процедуру по нахождению контуров
+		getContours(&imgdil, &imgcr); //passing images to the procedure via links
 
 		imshow("image", imgcr);
-		waitKey(waitkey);
+		waitKey(waitkey); //ssampling waitkey from console
 	}
 	//system("pause");
 	return 0;
